@@ -12,7 +12,7 @@ app.use(cors());
 app.use("/uploads", express.static("uploads"));
 app.use("/api/files", fileRoutes);
 app.get("/", (req, res) => {
-  res.send(res.json({ message: "Hello, from the backend of droplr!" }));
+  res.json({ message: "Hello, from the backend of droplr!" });
 });
 
 app.listen(PORT, () => {
