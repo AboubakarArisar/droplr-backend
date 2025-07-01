@@ -13,19 +13,18 @@ exports.uploadFile = async (req, res) => {
 
     const fileData = {
       filename: file.originalname,
-      fileUrl: file.path, // Cloudinary secure URL
-      publicId: file.filename, // Cloudinary public ID
+      fileUrl: file.path,
+      publicId: file.filename,
       latitude,
       longitude,
     };
 
     const savedFile = await fileService.createFile(fileData);
 
-    // Schedule deletion after 20 minutes
     setTimeout(async () => {
-      await fileService.deleteFile(savedFile._id); // Delete from DB
-      await cloudinary.uploader.destroy(fileData.publicId); // Delete from Cloudinary
-    }, 20 * 60 * 1000); // 20 minutes in milliseconds
+      await fileService.deleteFile(savedFile._id);
+      await cloudinary.uploader.destroy(fileData.publicId);
+    }, 20 * 60 * 1000);
 
     res.status(201).json({ success: true, data: savedFile });
   } catch (error) {
