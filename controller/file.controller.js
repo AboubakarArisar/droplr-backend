@@ -36,8 +36,13 @@ exports.uploadFile = async (req, res) => {
 exports.getNearbyFiles = async (req, res) => {
   try {
     const { latitude, longitude } = req;
+    const userAccuracy = parseFloat(req.query.accuracy) || null;
 
-    const files = await fileService.findNearbyFiles(latitude, longitude);
+    const files = await fileService.findNearbyFiles(
+      latitude,
+      longitude,
+      userAccuracy
+    );
     res.status(200).json({ success: true, data: files });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
