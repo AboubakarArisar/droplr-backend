@@ -12,5 +12,6 @@ router.post(
 );
 
 router.get("/nearby", locationMiddleware, fileController.getNearbyFiles);
+router.post("/download/:id", fileController.downloadFile);
 
 module.exports = router;

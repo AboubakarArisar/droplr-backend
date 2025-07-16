@@ -127,11 +127,11 @@ droplr-backend/
 http://localhost:5000/api/files
 ```
 
-### 1. Upload File
+### 1. Upload File (with optional password and visibility)
 
 **POST** `/upload`
 
-Upload a file with location data.
+Upload a file with location data, optional password protection, and visibility (public/private).
 
 **Request:**
 
@@ -140,6 +140,8 @@ Upload a file with location data.
   - `file`: File to upload (max 100MB)
   - `latitude`: GPS latitude (number)
   - `longitude`: GPS longitude (number)
+  - `password`: (optional) Password to protect the file (only for private files)
+  - `visibility`: (optional) 'public' or 'private' (default: 'public')
 
 **Response:**
 
@@ -153,7 +155,9 @@ Upload a file with location data.
     "publicId": "uploads/...",
     "latitude": 40.7128,
     "longitude": -74.006,
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "passwordHash": "...", // Only present if password was set
+    "visibility": "public" // or "private"
   }
 }
 ```
@@ -164,6 +168,59 @@ Upload a file with location data.
 {
   "success": false,
   "message": "File is required"
+}
+```
+
+### 2. Download File (with password verification for private files)
+
+**POST** `/download/:id`
+
+Download or access a file by its ID. If the file is private and password-protected, you must provide the correct password. Public files are accessible without a password.
+
+**Request:**
+
+- **Content-Type**: `application/json`
+- **Body**:
+  - `password`: (required if file is private and password-protected) Password for the file
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "fileUrl": "https://res.cloudinary.com/...",
+    "filename": "example.pdf"
+  }
+}
+```
+
+**Error Responses:**
+
+- File not found:
+
+```json
+{
+  "success": false,
+  "message": "File not found"
+}
+```
+
+- Password required (for private files):
+
+```json
+{
+  "success": false,
+  "message": "Password required"
+}
+```
+
+- Incorrect password:
+
+```json
+{
+  "success": false,
+  "message": "Incorrect password"
 }
 ```
 
