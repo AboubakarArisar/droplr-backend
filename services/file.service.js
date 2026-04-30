@@ -8,6 +8,10 @@ exports.deleteFile = async (fileId) => {
   return await File.findByIdAndDelete(fileId);
 };
 
+exports.findFileById = async (fileId) => {
+  return await File.findById(fileId);
+};
+
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371000; // Radius of Earth in meters
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -81,8 +85,19 @@ exports.findNearbyFiles = async (latitude, longitude, userAccuracy = null) => {
         file.latitude,
         file.longitude
       );
+
+      const {
+        _id,
+        filename,
+        createdAt,
+        visibility,
+      } = file.toObject();
+
       return {
-        ...file.toObject(),
+        _id,
+        filename,
+        createdAt,
+        visibility,
         distance: Math.round(distance),
       };
     })

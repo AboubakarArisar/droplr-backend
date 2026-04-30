@@ -1,5 +1,6 @@
 const fileService = require("../services/file.service");
 const bcrypt = require("bcrypt");
+const cloudinary = require("../config/cloudinary.config");
 
 exports.uploadFile = async (req, res) => {
   try {
@@ -11,6 +12,13 @@ exports.uploadFile = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "File is required" });
+    }
+
+    if (visibility === "private" && !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password is required for private files",
+      });
     }
 
     const fileData = {
@@ -30,8 +38,17 @@ exports.uploadFile = async (req, res) => {
     const savedFile = await fileService.createFile(fileData);
 
     setTimeout(async () => {
-      await fileService.deleteFile(savedFile._id);
-      await cloudinary.uploader.destroy(fileData.publicId);
+      try {
+        await fileService.deleteFile(savedFile._id);
+        await cloudinary.uploader.destroy(fileData.publicId, {
+          resource_type: "auto",
+        });
+      } catch (cleanupError) {
+        console.error(
+          `Failed to clean up expired file ${savedFile._id}:`,
+          cleanupError.message
+        );
+      }
     }, 20 * 60 * 1000);
 
     res.status(201).json({ success: true, data: savedFile });
@@ -60,13 +77,20 @@ exports.downloadFile = async (req, res) => {
   try {
     const { id } = req.params;
     const { password } = req.body;
-    const file = await require("../models/file.model").findById(id);
+    const file = await fileService.findFileById(id);
     if (!file) {
       return res
         .status(404)
         .json({ success: false, message: "File not found" });
     }
-    if (file.visibility === "private" && file.passwordHash) {
+
+    if (file.visibility === "private") {
+      if (!file.passwordHash) {
+        return res.status(403).json({
+          success: false,
+          message: "Private file is not available for download",
+        });
+      }
       if (!password) {
         return res
           .status(401)
@@ -79,7 +103,7 @@ exports.downloadFile = async (req, res) => {
           .json({ success: false, message: "Incorrect password" });
       }
     }
-    // Public files or private files without passwordHash are accessible without password
+
     res
       .status(200)
       .json({
